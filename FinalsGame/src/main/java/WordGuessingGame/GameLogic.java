@@ -1,6 +1,16 @@
 package WordGuessingGame;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.Stack;
 
 public class GameLogic {
     
@@ -234,14 +244,18 @@ public class GameLogic {
         gameHistory.add(result);
     }
 
-    private void askToPlayAgain() {
+     private void askToPlayAgain() {
         System.out.print("\nWould you like to play again? (yes/no): ");
-        String response = scanner.nextLine().trim().toLowerCase();
+        String response = scanner.nextLine();
         
-        if (!response.startsWith("y")) {
-            gameActive = false;
-            System.out.println("Thanks for playing!");
+        if (response.equalsIgnoreCase("no")) {           
+            System.out.println("Thanks for playing!");  
+             gameActive = false;     
+             System.exit(0);
         }
+         System.out.println("Game status: " + gameActive);
+           
+        
     }
 
     private void displayGameHistory() {
