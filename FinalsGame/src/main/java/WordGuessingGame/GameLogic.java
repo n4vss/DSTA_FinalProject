@@ -4,37 +4,45 @@ import java.util.*;
 import javax.swing.JOptionPane;
 
 public class GameLogic {
-    private String wordToGuess;
-    private char[] progress;
-    private int undoAttempts = 0;
-    private static final int MAX_UNDO_ATTEMPTS = 3;
-    private int attemptsLeft;
-    private final int maxAttempts = 6;
-    private final WordBank wordBank = new WordBank();
-    private boolean gameActive = true;
-    private final Set<Character> guessedLetters = new HashSet<>();
-    private final Stack<Character> guessHistory = new Stack<>();
-    private final Queue<String> hintQueue = new LinkedList<>();
-    private final HashMap<Character, List<Integer>> letterPositions = new HashMap<>();
-    private final ArrayList<String> gameHistory = new ArrayList<>();
-    private GameGUI gui;
+    
+    private String wordToGuess;                      // The word the player has to guess
+    private char[] progress;                         // Player's progress represented by '_' and guessed letters
+    
+    private int undoAttempts = 0;                    // Number of undo actions used
+    private static final int MAX_UNDO_ATTEMPTS = 3;  // Max undos allowed per game
+    private int attemptsLeft;                        // Remaining incorrect guesses allowed
+    private final int maxAttempts = 6;               // Total allowed wrong attempts per game
+    private final WordBank wordBank = new WordBank(); // Provides words and hints
+    private boolean gameActive = true;               // Is the game currently active?
+    
+    private final HashSet<Character> guessedLetters = new HashSet<>(); // Stores already guessed letters
+    private final Stack<Character> guessHistory = new Stack<>();       // Stores guess history for undo functionality
+    private final Queue<String> hintQueue = new LinkedList<>();        // Stores hints for the current word
+    private final HashMap<Character, List<Integer>> letterPositions = new HashMap<>(); // Letter positions in word
+    private final ArrayList<String> gameHistory = new ArrayList<>();   // Game logs (guesses, results, etc.)
+    
+    private GameGUI gui; // Reference to GUI object
 
+    // Constructor takes the GUI object to control the UI
     public GameLogic(GameGUI gui) {
         this.gui = gui;
     }
 
+    // Starts the full game loop
     public void startGameLoop() {
-        gui.showDifficultyDialog();
-        initializeGame();
-        playGame();
+        gui.showDifficultyDialog(); // Ask player to choose difficulty
+        initializeGame();           // Set up new game state
+        playGame();                 // Begin game (initial display)
     }
 
+    // Selects word and hints based on difficulty level
     public void chooseDifficulty(String difficulty) {
         wordToGuess = wordBank.getRandomWord(difficulty);
         hintQueue.addAll(wordBank.getHints(wordToGuess));
-        mapLetterPositions();
+        mapLetterPositions(); // Map letters to their positions
     }
 
+    // Prepares the letter position map for the chosen word
     private void mapLetterPositions() {
         for (int i = 0; i < wordToGuess.length(); i++) {
             char c = wordToGuess.charAt(i);
@@ -42,25 +50,28 @@ public class GameLogic {
         }
     }
 
+    // Resets game state for a new game
     private void initializeGame() {
         progress = new char[wordToGuess.length()];
-        Arrays.fill(progress, '_');
+        Arrays.fill(progress, '_');              // Fill progress with underscores
         guessedLetters.clear();
         guessHistory.clear();
         attemptsLeft = maxAttempts;
         undoAttempts = 0;
-        letterPositions.clear(); // Clear previous positions
-        hintQueue.clear();       // Clear previous hints
-        mapLetterPositions();    // Re-map for new word
-        hintQueue.addAll(wordBank.getHints(wordToGuess)); // Re-add hints for new word
+        letterPositions.clear();
+        hintQueue.clear();
+        mapLetterPositions();
+        hintQueue.addAll(wordBank.getHints(wordToGuess));
         gameHistory.add("New game started with word: " + wordToGuess);
         updateDisplay();
     }
 
+    // Displays the current game state
     private void playGame() {
         updateDisplay();
     }
 
+    // Processes all player input (letters or commands)
     public void processUserInput(String input) {
         if (input.isEmpty()) return;
 
@@ -77,7 +88,7 @@ public class GameLogic {
             }
             default -> {
                 if (input.length() == 1 && Character.isLetter(input.charAt(0))) {
-                    makeGuess(input.charAt(0));
+                    makeGuess(input.charAt(0)); // Process single character guess
                 } else {
                     JOptionPane.showMessageDialog(gui, "Invalid input. Please enter a single letter or valid command.", 
                             "Invalid Input", JOptionPane.WARNING_MESSAGE);
@@ -86,6 +97,7 @@ public class GameLogic {
         }
     }
 
+    // Handles guessing a letter
     private void makeGuess(char guess) {
         if (guessedLetters.contains(guess)) {
             JOptionPane.showMessageDialog(gui, "You already guessed '" + guess + "'", 
@@ -119,12 +131,14 @@ public class GameLogic {
         }
     }
 
+    // Updates the visible progress with the correct letter positions
     private void updateProgress(char guess) {
         for (int pos : letterPositions.get(guess)) {
             progress[pos] = guess;
         }
     }
 
+    // Displays the next hint, if available
     private void showHint() {
         if (!hintQueue.isEmpty()) {
             String hint = hintQueue.poll();
@@ -136,6 +150,7 @@ public class GameLogic {
         updateDisplay();
     }
 
+    // Undoes the last guess (if within the limit)
     private void undoGuess() {
         if (undoAttempts >= MAX_UNDO_ATTEMPTS) {
             JOptionPane.showMessageDialog(gui, "Undo limit reached. You can only undo 3 times per game.", 
@@ -154,6 +169,7 @@ public class GameLogic {
         gui.addToHistory("Undid guess: " + lastGuess);
         undoAttempts++;
 
+        // Rebuild progress after undo
         Arrays.fill(progress, '_');
         for (char c : guessedLetters) {
             if (letterPositions.containsKey(c)) {
@@ -162,21 +178,24 @@ public class GameLogic {
         }
         
         if (!letterPositions.containsKey(lastGuess)) {
-            attemptsLeft++;
+            attemptsLeft++; // Restore attempt if the guess was wrong
         }
 
         updateDisplay();
     }
 
+    // Checks if the game is over
     private boolean isGameOver() {
         return attemptsLeft <= 0 || String.valueOf(progress).equals(wordToGuess);
     }
 
+    // Shows win/lose dialog
     private void displayResult() {
         boolean won = String.valueOf(progress).equals(wordToGuess);
         gui.showGameOver(won, wordToGuess);
     }
 
+    // Logs the game result in the history
     private void recordGameResult() {
         String result = "Game result: " +
                 (String.valueOf(progress).equals(wordToGuess) ? "Won" : "Lost") +
@@ -185,10 +204,12 @@ public class GameLogic {
         gui.addToHistory(result);
     }
 
+    // Prompts user if they want to play again
     private boolean askToPlayAgain() {
         return gui.askToPlayAgain();
     }
 
+    // Updates the GUI with current progress, guesses, attempts, etc.
     private void updateDisplay() {
         String wordProgress = String.valueOf(progress);
         String guessedLettersStr = String.join(", ", getSortedGuesses());
@@ -198,6 +219,7 @@ public class GameLogic {
         gui.updateGameState(wordProgress, guessedLettersStr, attemptsLeft, hintsLeft, undosLeft);
     }
 
+    // Returns a sorted list of guessed letters
     private List<String> getSortedGuesses() {
         return guessedLetters.stream().sorted().map(String::valueOf).toList();
     }

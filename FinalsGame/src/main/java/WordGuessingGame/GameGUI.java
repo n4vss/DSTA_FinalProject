@@ -1,22 +1,7 @@
 package WordGuessingGame;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
+import java.awt.*;
+import javax.swing.*;
 
 public class GameGUI extends JFrame {
     private GameLogic game;
@@ -24,7 +9,7 @@ public class GameGUI extends JFrame {
     private JLabel wordLabel, attemptsLabel, guessedLettersLabel, hintsLabel, undosLabel;
     private JTextField inputField;
     private JTextArea historyArea;
-    private JButton hintButton, undoButton, restartButton, quitButton;
+    private JButton hintButton, undoButton, restartButton;
 
     public GameGUI() {
         game = new GameLogic(this);
@@ -32,27 +17,31 @@ public class GameGUI extends JFrame {
     }
 
     private void initializeUI() {
-        setTitle("GuessBreaker - Word Guessing Game");
+        setTitle("🎯 GuessBreaker - Word Guessing Game");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 500);
+        setSize(700, 550);
+        setMinimumSize(new Dimension(650, 500));
         setLocationRelativeTo(null);
 
         mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(Color.decode("#f4f4f4"));
 
         createMenuPanel();
         createGamePanel();
         createHistoryPanel();
 
         add(mainPanel);
+        setVisible(true);
     }
 
     private void createMenuPanel() {
         JPanel menuPanel = new JPanel(new GridLayout(1, 3, 10, 10));
-        
-        JButton newGameButton = new JButton("New Game");
-        JButton howToPlayButton = new JButton("How to Play");
-        JButton exitButton = new JButton("Exit");
+        menuPanel.setBackground(Color.decode("#f4f4f4"));
+
+        JButton newGameButton = createStyledButton("🆕 New Game");
+        JButton howToPlayButton = createStyledButton("📘 How to Play");
+        JButton exitButton = createStyledButton("🚪 Exit");
 
         newGameButton.addActionListener(e -> game.startGameLoop());
         howToPlayButton.addActionListener(e -> showInstructions());
@@ -68,21 +57,22 @@ public class GameGUI extends JFrame {
     private void createGamePanel() {
         gamePanel = new JPanel();
         gamePanel.setLayout(new BoxLayout(gamePanel, BoxLayout.Y_AXIS));
-        gamePanel.setBorder(BorderFactory.createTitledBorder("Game"));
+        gamePanel.setBackground(Color.WHITE);
+        gamePanel.setBorder(BorderFactory.createTitledBorder("Game Area"));
 
-        wordLabel = new JLabel("Word: ");
-        wordLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
-        wordLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        wordLabel = createLabel("Word: ", 24, true);
+        attemptsLabel = createLabel("Attempts left: 6", 16, false);
+        guessedLettersLabel = createLabel("Guessed letters: ", 16, false);
+        hintsLabel = createLabel("Hints remaining: ", 16, false);
+        undosLabel = createLabel("Undos remaining: 3", 16, false);
 
-        attemptsLabel = new JLabel("Attempts left: 6");
-        guessedLettersLabel = new JLabel("Guessed letters: ");
-        hintsLabel = new JLabel("Hints remaining: ");
-        undosLabel = new JLabel("Undos remaining: 3");
+        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        inputPanel.setBackground(Color.WHITE);
 
-        JPanel inputPanel = new JPanel();
-        inputField = new JTextField(15);
-        JButton guessButton = new JButton("Guess");
-        
+        inputField = new JTextField(12);
+        inputField.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        JButton guessButton = createStyledButton("🎯 Guess");
+
         guessButton.addActionListener(e -> {
             String input = inputField.getText().trim().toLowerCase();
             if (!input.isEmpty()) {
@@ -93,25 +83,24 @@ public class GameGUI extends JFrame {
 
         inputField.addActionListener(e -> guessButton.doClick());
 
-        inputPanel.add(new JLabel("Enter letter: "));
+        inputPanel.add(new JLabel("Enter letter:"));
         inputPanel.add(inputField);
         inputPanel.add(guessButton);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        hintButton = new JButton("Hint");
-        undoButton = new JButton("Undo");
-        restartButton = new JButton("Restart");
-        quitButton = new JButton("Quit");
+        buttonPanel.setBackground(Color.WHITE);
+
+        hintButton = createStyledButton("💡 Hint");
+        undoButton = createStyledButton("↩️ Undo");
+        restartButton = createStyledButton("🔁 Restart");
 
         hintButton.addActionListener(e -> game.processUserInput("hint"));
         undoButton.addActionListener(e -> game.processUserInput("undo"));
         restartButton.addActionListener(e -> game.processUserInput("restart"));
-        quitButton.addActionListener(e -> game.processUserInput("quit"));
 
         buttonPanel.add(hintButton);
         buttonPanel.add(undoButton);
         buttonPanel.add(restartButton);
-        buttonPanel.add(quitButton);
 
         gamePanel.add(Box.createVerticalStrut(10));
         gamePanel.add(wordLabel);
@@ -120,9 +109,8 @@ public class GameGUI extends JFrame {
         gamePanel.add(guessedLettersLabel);
         gamePanel.add(hintsLabel);
         gamePanel.add(undosLabel);
-        gamePanel.add(Box.createVerticalStrut(20));
+        gamePanel.add(Box.createVerticalStrut(15));
         gamePanel.add(inputPanel);
-        gamePanel.add(Box.createVerticalStrut(10));
         gamePanel.add(buttonPanel);
 
         mainPanel.add(gamePanel, BorderLayout.CENTER);
@@ -130,20 +118,42 @@ public class GameGUI extends JFrame {
 
     private void createHistoryPanel() {
         JPanel historyPanel = new JPanel(new BorderLayout());
+        historyPanel.setBackground(Color.WHITE);
         historyPanel.setBorder(BorderFactory.createTitledBorder("Game History"));
-        
-        historyArea = new JTextArea(8, 30);
+
+        historyArea = new JTextArea(6, 30);
         historyArea.setEditable(false);
+        historyArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
         historyArea.setLineWrap(true);
         historyArea.setWrapStyleWord(true);
-        
+
         JScrollPane scrollPane = new JScrollPane(historyArea);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
         historyPanel.add(scrollPane, BorderLayout.CENTER);
-        
         mainPanel.add(historyPanel, BorderLayout.SOUTH);
     }
 
-    private void showInstructions() {
+    private JLabel createLabel(String text, int size, boolean bold) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, size));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return label;
+    }
+
+    private JButton createStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        button.setFocusPainted(false);
+        button.setBackground(Color.decode("#e0e0e0"));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        return button;
+    }
+
+    public void showInstructions() {
         String instructions = "=== How to Play ===\n\n" +
                 "1. Choose a difficulty level (Easy, Medium, Hard)\n" +
                 "2. Try to guess the hidden word by entering letters\n" +
@@ -152,9 +162,8 @@ public class GameGUI extends JFrame {
                 "   - 'hint' - get a helpful hint\n" +
                 "   - 'undo' - undo your last guess\n" +
                 "   - 'restart' - start a new game\n" +
-                "   - 'quit' - exit the game\n\n" +
                 "Good luck!";
-                
+
         JOptionPane.showMessageDialog(this, instructions, "How to Play", JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -181,23 +190,23 @@ public class GameGUI extends JFrame {
                 null,
                 options,
                 options[1]);
-                
+
         String difficulty = switch (choice) {
             case 0 -> "easy";
             case 1 -> "medium";
             case 2 -> "hard";
             default -> "medium";
         };
-        
+
         game.chooseDifficulty(difficulty);
     }
 
     public void showGameOver(boolean won, String word) {
-        String message = won ? 
-                "Congratulations! You guessed the word: " + word :
-                "Game over! The word was: " + word;
-                
-        JOptionPane.showMessageDialog(this, message, "Game Over", 
+        String message = won ?
+                "🎉 Congratulations! You guessed the word: " + word :
+                "❌ Game over! The word was: " + word;
+
+        JOptionPane.showMessageDialog(this, message, "Game Over",
                 won ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
     }
 
@@ -206,7 +215,7 @@ public class GameGUI extends JFrame {
                 "Would you like to play again?",
                 "Play Again",
                 JOptionPane.YES_NO_OPTION);
-                
+
         return response == JOptionPane.YES_OPTION;
     }
 }
